@@ -1,8 +1,11 @@
 const mongoose = require('mongoose');
 // const bcrypt = require('bcrypt');
+// const { v4: uuidv4 } = require('uuid');
 
-const user = require('../models/user');
-const note = require('../models/note');
+
+const User = require('../models/user');
+const Note = require('../models/note');
+const Token = require('../models/token');
 
 module.exports = {};
 

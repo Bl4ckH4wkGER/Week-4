@@ -4,6 +4,7 @@ const router = Router();
 const noteDAO = require('../daos/note');
 
 // Middleware for authentication
+// MUST USE
 
 // Create: POST /notes
 // router.post("/", async (req, res, next) => {
