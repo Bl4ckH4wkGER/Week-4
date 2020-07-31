@@ -19,7 +19,6 @@ router.post("/", async (req, res, next) => {
             if(!doesPasswordMatch){
                 res.status(401).send('Wrong password!');
             } else {
-                // res.status(200).send('Ready to assign token.')
                 try{
                     const userToken = await userDAO.getUserToken(email);
                     res.json(userToken)
@@ -46,10 +45,6 @@ router.post("/signup", async (req, res, next) => {
     }
 });
 
-// Logout: POST /login/logout
-// router.post("/logout", async (req, res, next) => {
-// });
-
 // Change Password POST /login/password
 router.post("/password", async (req, res, next) => {
     const {email, password} = req.body;
@@ -61,6 +56,10 @@ router.post("/password", async (req, res, next) => {
         // change this to where the user then actually updates the password
     }
 });
+
+// Logout: POST /login/logout
+// router.post("/logout", async (req, res, next) => {
+// });
 
 // Middleware for error handling
 router.use(function (error, req, res, next) {
