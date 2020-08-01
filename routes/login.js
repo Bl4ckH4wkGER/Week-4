@@ -4,6 +4,19 @@ const router = Router();
 
 const userDAO = require('../daos/user');
 
+//Middleware to look up token , only causing more errors at this point
+// router.use( async (req, res, next) => {
+//     const { email, password, token } = req.body;
+//     const user = await userDAO.getUser(email);
+//     const storedToken = await userDAO.getStoredToken(user._id);
+//     if (token === storedToken) {
+//         res.json(storedToken);
+//         next()
+//     } else {
+//         next()
+//     }
+// });
+
 // Login: POST /login
 router.post("/", async (req, res, next) => {
     const {email, password} = req.body;
@@ -47,19 +60,28 @@ router.post("/signup", async (req, res, next) => {
 
 // Change Password POST /login/password
 router.post("/password", async (req, res, next) => {
-    const {email, password} = req.body;
+    const {email, password, token} = req.body;
     const user = await userDAO.getUser(email)
     if (!user) {
         res.status(401).send('User does not exist')
     } else {
-        res.status(200).send('User exists.');
-        // change this to where the user then actually updates the password
+        // res.status(200).send('update password')
+        const storedToken = await userDAO.getStoredToken(email);
+        if (token === storedToken) {
+            try{
+                const updatedUser = await userDAO.updatePassword(email, password);
+                res.json(updatedUser)
+            } catch (e) {
+                next(e);
+            }
+        } else {
+            res.status(401).send('Bad or no token.')
+        }
     }
 });
 
 // Logout: POST /login/logout
-// router.post("/logout", async (req, res, next) => {
-// });
+//  
 
 // Middleware for error handling
 router.use(function (error, req, res, next) {

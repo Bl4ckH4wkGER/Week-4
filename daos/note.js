@@ -8,6 +8,3 @@ const Note = require('../models/note');
 const Token = require('../models/token');
 
 module.exports = {};
-
-// main modules
-

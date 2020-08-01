@@ -4,7 +4,17 @@ const router = Router();
 const noteDAO = require('../daos/note');
 
 // Middleware for authentication
-// MUST USE
+// make sure that user has working token
+// router.use(function (req, res, next) {
+//     const { userId, token } = req.params;
+//     const storedToken = await noteDAO.getStoredToken
+
+//     if (!token) {
+//         res.status(401).send("No or bad token - not authorized");
+//     } else
+//         next();
+//     } 
+// });
 
 // Create: POST /notes
 // router.post("/", async (req, res, next) => {
