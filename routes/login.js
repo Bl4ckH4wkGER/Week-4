@@ -65,17 +65,17 @@ router.post("/password", async (req, res, next) => {
     if (!user) {
         res.status(401).send('User does not exist')
     } else {
-        // res.status(200).send('update password')
-        const storedToken = await userDAO.getStoredToken(email);
-        if (token === storedToken) {
-            try{
-                const updatedUser = await userDAO.updatePassword(email, password);
+        try {
+            const { token } = req.headers.authorization;
+            const userId = await userDAO.getUserIdByToken(token);
+            if(userId){
+                const updatedUser = await userDAO.updatePassword(userId, password);
                 res.json(updatedUser)
-            } catch (e) {
-                next(e);
+            } else {
+                res.status(401).send('No user associated with this token.')
             }
-        } else {
-            res.status(401).send('Bad or no token.')
+        } catch (e) {
+            next(e);
         }
     }
 });

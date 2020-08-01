@@ -54,22 +54,20 @@ module.exports.signup = async (email, password) => {
     }
 };
 
-module.exports.getStoredToken = async (email) => {
-    const user = await User.findOne({ email: email });
-    try {
-        const userId = user._id;
-        const userToken = await Token.findOne( { userId: userId } );
-        return userToken
+module.exports.getUserIdByToken = async (token) => {
+    try{
+        const user = await Token.findOne( { token: token} );
+        return user.userId
     } catch (e) {
         throw e;
     }
 }
 
-module.exports.updatePassword = async (email, password) => {
+module.exports.updatePassword = async (userId, password) => {
     try {
         const newPasswordHash = await bcrypt.hash(password, 10);
         const updatedUser = User.aggregate([
-            { $match: { email: email } },
+            { $match: { _id: userId } },
             { $set: { password: newPasswordHash } }
         ])
         return updatedUser
