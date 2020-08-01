@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-// const bcrypt = require('bcrypt');
-// const { v4: uuidv4 } = require('uuid');
-
 
 const User = require('../models/user');
 const Note = require('../models/note');
@@ -9,18 +6,9 @@ const Token = require('../models/token');
 
 module.exports = {};
 
-module.exports.getUserIdByToken = async (token) => {
+module.exports.createNote = async (userId, text) => {
     try{
-        const user = await Token.findOne( { token: token} );
-        return user.userId
-    } catch (e) {
-        throw e;
-    }
-}
-
-module.exports.create = async (userId, text) => {
-    try{
-        const newNote = await User.create({
+        const newNote = await Note.create({
             text: text,
             userId: userId
         });
@@ -30,20 +18,21 @@ module.exports.create = async (userId, text) => {
     }
 }
 
-module.exports.getAllNotesForUser = async (userId) => {
+module.exports.getNote = async (userId, noteId) => {
     try{
-        const userNotes = Note.find( {userId: userId} ).lean();
-        return userNotes
+        const userNote = Note.find( {userId: userId}, {_id: noteId});
+        return userNote
     } catch (e) {
         throw e;
     }
 }
 
-module.exports.getNoteById = async (noteId) => {
+module.exports.getUserNotes = async(userId) => {
     try{
-        const userNote = Note.findOne( {_id: noteId}).lean();
-        return userNote
+        const notes = Note.find( { userId: userId });
+        return notes
     } catch (e) {
         throw e;
     }
+
 }

@@ -5,41 +5,8 @@ const { v4: uuidv4 } = require('uuid');
 const User = require('../models/user');
 const Note = require('../models/note');
 const Token = require('../models/token');
-const token = require('../models/token');
 
 module.exports = {};
-
-module.exports.getUser = async (email) => {
-    try {
-        const user = await User.findOne({ email: email });
-        return user
-    } catch (e) {
-        throw e;
-    }
-}
-
-module.exports.getStoredPassword = async (email) => {
-    try {
-        const user = await User.findOne({ email: email }, { password: 1 });
-        return user.password
-    } catch (e) {
-        throw e;
-    }
-}
-
-module.exports.getUserToken = async (email) => {
-    const user = await User.findOne({ email: email });
-    try{
-        const tokenString = uuidv4();
-        const userToken = Token.create({
-            userId: user._id,
-            token: tokenString
-        });
-        return userToken;
-    } catch (e) {
-        throw e;
-    }
-}
 
 module.exports.signup = async (email, password) => {
     const passwordHash = await bcrypt.hash(password, 10);
@@ -54,26 +21,37 @@ module.exports.signup = async (email, password) => {
     }
 };
 
-module.exports.getUserIdByToken = async (token) => {
-    try{
-        const user = await Token.findOne( { token: token} );
-        return user.userId
+module.exports.getUser = async (email) => {
+    try {
+        const user = await User.findOne({ email: email });
+        return user
     } catch (e) {
         throw e;
     }
 }
 
-module.exports.updatePassword = async (userId, password) => {
+module.exports.updateUserPassword = async (userId, password) => {
     try {
         const newPasswordHash = await bcrypt.hash(password, 10);
         const updatedUser = User.aggregate([
             { $match: { _id: userId } },
             { $set: { password: newPasswordHash } }
-        ])
-        return updatedUser
+        ]);
+        return updatedUser;
     } catch (e) {
         throw e;
     }
 }
 
-// module.exports.logout = async (userData) => {}
+module.exports.assignUserToken = async (userId) => {
+    const tokenString = uuidv4();
+    try{
+        const userToken = Token.create({
+            userId: userId,
+            token: tokenString
+        });
+        return userToken;
+    } catch (e) {
+        throw e;
+    }
+}
