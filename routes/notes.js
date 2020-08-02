@@ -70,11 +70,11 @@ router.get("/:id", isLoggedIn, async (req, res, next) => {
         if (!validNoteId) {
             res.sendStatus(400);
         } else {
-            try {
-                const userNote = await noteDAO.getNote(userId, noteId);
-                res.json(userNote);
-            } catch (e) {
-                res.status(404).send(e.message);  
+            const userNote = await noteDAO.getNote(userId, noteId);
+            if (userNote) {
+                res.json(userNote)
+            } else {
+                res.status(404).send('No note found')
             }
         }
     }
