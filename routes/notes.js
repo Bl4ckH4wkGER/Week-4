@@ -1,30 +1,36 @@
 const { Router, query } = require("express");
+const mongoose = require('mongoose');
 const router = Router();
 
 const noteDAO = require('../daos/note');
 const tokenDAO = require('../daos/token');
 
-// Middleware for authentication
-router.use(function (req, res, next) {
+// Middleware to validate token
+const isLoggedIn = async (req,res,next) => {
     const bearerHeader = req.headers['authorization'];
-    if (bearerHeader) {
-        const bearer = bearerHeader.split(' ');
-        const bearerToken = bearer[1];
-        req.token = bearerToken;
-        if (bearerToken) {
-            next()
+        if (bearerHeader) {
+            const bearer = bearerHeader.split(' ');
+            const bearerToken = bearer[1];
+            req.token = bearerToken;
+            if (req.token) {
+                const userId = await tokenDAO.getUserIdFromToken(req.token);
+                if (userId) {
+                    req.userId = userId;
+                    next();
+                } else {
+                    res.sendStatus(401);
+                }
+            } else {
+                res.sendStatus(401);
+            }
         } else {
-            res.sendStatus(401)
-        }
-    } else {
-        res.sendStatus(401);
-    } 
-}
-);
+            res.sendStatus(401);
+        } 
+};
 
 // Create: POST /notes
-router.post("/", async (req, res, next) => {
-    const userId = await tokenDAO.getUserIdFromToken(req.token);
+router.post("/", isLoggedIn, async (req, res, next) => {
+    const userId = req.userId;
     const { text }  = req.body
     if (!userId) {
         res.sendStatus(401)
@@ -39,32 +45,37 @@ router.post("/", async (req, res, next) => {
 });
 
 // Get all of my notes: GET /notes
-router.get("/", async (req, res, next) => {
-    const userId = await tokenDAO.getUserIdFromToken(req.token);
+router.get("/", isLoggedIn, async (req, res, next) => {
+    const userId = req.userId;
     if (!userId) {
         res.sendStatus(401)
     } else{
-        try {
-            const notes = await noteDAO.getUserNotes(userId);
+        const notes = await noteDAO.getUserNotes(userId);
+        if (notes) {
             res.json(notes);
-        } catch (e) {
-            res.status(404).send(e.message);  
-        }
+        } else {
+            res.sendStatus(404)
+        };
     }
 });
 
 // Get a single note: GET /notes/:id
-router.get("/:id", async (req, res, next) => {
-    const { noteId } = req.params.id;
-    const userId = await tokenDAO.getUserIdFromToken(req.token);
+router.get("/:id", isLoggedIn, async (req, res, next) => {
+    const noteId = req.params.id;
+    const userId = req.userId;
     if (!userId) {
         res.sendStatus(401)
-    } else{
-        try {
-            const userNote = await noteDAO.getNote(userId, noteId);
-            res.json(userNote);
-        } catch (e) {
-            res.status(400).send(e.message);  
+    } else {
+        const validNoteId = mongoose.Types.ObjectId.isValid(noteId);
+        if (!validNoteId) {
+            res.sendStatus(400);
+        } else {
+            try {
+                const userNote = await noteDAO.getNote(userId, noteId);
+                res.json(userNote);
+            } catch (e) {
+                res.status(404).send(e.message);  
+            }
         }
     }
 });

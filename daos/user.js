@@ -33,10 +33,7 @@ module.exports.getUser = async (email) => {
 module.exports.updateUserPassword = async (userId, password) => {
     try {
         const newPasswordHash = await bcrypt.hash(password, 10);
-        const updatedUser = User.aggregate([
-            { $match: { _id: userId } },
-            { $set: { password: newPasswordHash } }
-        ]);
+        const updatedUser = User.update({ _id: userId }, {  password: newPasswordHash });
         return updatedUser;
     } catch (e) {
         throw e;

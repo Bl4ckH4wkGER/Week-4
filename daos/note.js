@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const User = require('../models/user');
 const Note = require('../models/note');
 const Token = require('../models/token');
+const note = require('../models/note');
 
 module.exports = {};
 
@@ -20,7 +21,7 @@ module.exports.createNote = async (userId, text) => {
 
 module.exports.getNote = async (userId, noteId) => {
     try{
-        const userNote = Note.find( {userId: userId}, {_id: noteId});
+        const userNote = await Note.findOne( {userId: userId, _id: noteId});
         return userNote
     } catch (e) {
         throw e;
@@ -29,7 +30,7 @@ module.exports.getNote = async (userId, noteId) => {
 
 module.exports.getUserNotes = async(userId) => {
     try{
-        const notes = Note.find( { userId: userId });
+        const notes = await Note.find( { userId: userId });
         return notes
     } catch (e) {
         throw e;

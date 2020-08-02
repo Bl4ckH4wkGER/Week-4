@@ -4,7 +4,28 @@ const router = Router();
 
 const userDAO = require('../daos/user');
 const tokenDAO = require('../daos/token');
-const token = require("../models/token");
+
+// Middleware to validate token
+const isLoggedIn = async (req,res,next) => {
+    const bearerHeader = req.headers['authorization'];
+        if (bearerHeader) {
+            const bearer = bearerHeader.split(' ');
+            const bearerToken = bearer[1];
+            req.token = bearerToken;
+            if (req.token) {
+                const userId = await tokenDAO.getUserIdFromToken(req.token);
+                if (userId) {
+                    next();
+                } else {
+                    res.sendStatus(401);
+                }
+            } else {
+                res.sendStatus(401);
+            }
+        } else {
+            res.sendStatus(401);
+        } 
+};
 
 // Signup: POST /login/signup
 router.post("/signup", async (req, res, next) => {
@@ -48,79 +69,41 @@ router.post("/", async (req, res, next) => {
 });
 
 // Change Password POST /login/password
-router.post("/password", 
-    function (req, res, next) {
-        const bearerHeader = req.headers['authorization'];
-        if (bearerHeader) {
-            const bearer = bearerHeader.split(' ');
-            const bearerToken = bearer[1];
-            req.token = bearerToken;
-            if (bearerToken) {
-                next()
-            } else {
+router.post("/password", isLoggedIn, async (req, res, next) => {
+    const userId = await tokenDAO.getUserIdFromToken(req.token);
+    if (!userId) {
+        res.status(401).send('Not a valid token.')
+    } else {
+        const { password } = req.body;
+        if (!password || password === ""){
+            res.status(400).send('Must provide a password.');
+        } else {
+            try {
+                const updatedUser = await userDAO.updateUserPassword(userId, password);
+                res.sendStatus(200)
+            } catch (e) {
                 res.sendStatus(401);
             }
-        } else {
-            res.sendStatus(401);
-        } 
-    },
-    async (req, res, next) => {
-        const userId = await tokenDAO.getUserIdFromToken(req.token);
-        if (!userId) {
-            res.status(401).send('Not a valid token.')
-        } else {
-            const { password } = req.body;
-            if (!password || password === ""){
-                res.status(400).send('Must provide a password.');
-            } else {
-                try {
-                    const updatedUser = await userDAO.updateUserPassword(userId, password);
-                    res.json(updatedUser)
-                } catch (e) {
-                    res.status(401);
-                }
-            }
         }
     }
-);
+});
 
 // Logout: POST /login/logout
-router.post("/password",
-    function (req, res, next) {
-        const bearerHeader = req.headers['authorization'];
-        if (bearerHeader) {
-            const bearer = bearerHeader.split(' ');
-            const bearerToken = bearer[1];
-            req.token = bearerToken;
-            if (bearerToken) {
-                next()
-            } else {
-                res.sendStatus(401)
-            }
-        } else {
-            res.sendStatus(401);
-        } 
-    },
-    async (req, res, next) => {
-        const userToken = req.token;
-        const tokenDeleted = await tokenDAO.removeToken(userToken);
-        if (tokenDeleted == true){
-            res.status(200).send('Token deleted.')
-        } else {
-            res.status(401).send('No user found for token.')
-        }
+router.post("/logout", isLoggedIn, async (req, res, next) => {
+    const userToken = req.token;
+    const tokenDeleted = await tokenDAO.removeToken(userToken);
+    if (tokenDeleted == true){
+        res.status(200).send('Token deleted.')
+    } else {
+        res.status(401).send('No user found for token.')
     }
-);
+});
 
 // Middleware for error handling
 router.use(function (error, req, res, next) {
     if (error.message.includes("duplicate key")){
         res.status(409).send('There is an existing account for this email.')
-    }
-    // else if (error.message.includes("not authorized")){
-    //     res.status(401).send('Bad login credentials.')
-    // }
-    else {
+    } else {
         res.status(500).send('Something broke! Our fault :(')
     } 
 });
